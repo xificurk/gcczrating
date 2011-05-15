@@ -2,15 +2,13 @@
 // @name            GcCzRating
 // @namespace       http://artax.karlin.mff.cuni.cz/~morap5am/gcczrating
 // @description     Přidává do stránek geocaching.com rozhraní pro hodnocení keší na geocaching.cz
-// @version         0.3
-// @copyright       2009, Petr Morávek (http://artax.karlin.mff.cuni.cz/~morap5am/gcczrating/)
+// @version         0.3.6
+// @copyright       2009-2011, Petr Morávek (http://artax.karlin.mff.cuni.cz/~morap5am/gcczrating/)
 // @license         (CC) Attribution; http://creativecommons.org/licenses/by/3.0/
 // @include         http://www.geocaching.com/seek/cache_details.aspx?*
 // @include         https://www.geocaching.com/seek/cache_details.aspx?*
 // @include         http://www.geocaching.com/seek/cdpf.aspx?*
 // @include         https://www.geocaching.com/seek/cdpf.aspx?*
-// @include         http://www.geocaching.com/seek/log.aspx?*
-// @include         https://www.geocaching.com/seek/log.aspx?*
 // @include         http://www.geocaching.com/seek/nearest.aspx*
 // @include         https://www.geocaching.com/seek/nearest.aspx*
 // @include         http://www.geocaching.com/bookmarks/view.aspx?*
@@ -42,9 +40,9 @@ var css = []
 if ($.browser.mozilla) {
     major = parseFloat($.browser.version.substr(0,3));
     minor = parseFloat($.browser.version.substr(4));
-    if (major >= 1.9 && minor >= 3) {
+    if (major > 1.9 || (major == 1.9 && minor >= 3)) {
         css["background-size"] = "background-size";
-    } else if (major >= 1.9 && minor >= 2) {
+    } else if (major == 1.9 && minor >= 2) {
         css["background-size"] = "-moz-background-size";
     } else {
         alert("Nekompatibilní prohlížeč.");
@@ -58,11 +56,10 @@ if ($.browser.mozilla) {
 
 
 /***** Init ****/
-if ($("#ctl00_SiteContent_lblSubmitErrorInfosss").length == 0) {
+if ($("#ctl00_divNotSignedIn").length == 0) {
     log("start");
     var gcUser = null;
-    gcUser = $("#ctl00_LoginUrl").prev("a").text();
-
+    gcUser = $("#ctl00_divSignedIn p.SignedInText strong a").text();
     run();
 }
 
@@ -74,9 +71,6 @@ function run() {
         initMyratings(initDetailsPage);
     } else if (urlPath.search("cdpf\.aspx") >= 0) {
         pageType = "print";
-        initDetailsPage();
-    } else if (urlPath.search("log\.aspx") >= 0) {
-        pageType = "log";
         initMyratings(initDetailsPage);
     } else if (urlPath.search("nearest\.aspx") >= 0) {
         pageType = "nearest";
@@ -107,8 +101,6 @@ function initDetailsPage() {
         colors = ["#000", "#999", "#EEE"];
     } else if (pageType == "details") {
         waypoint = document.title.substring(0, document.title.indexOf(" "));
-    } else {
-        waypoint = $("#ctl00_Breadcrumbs").children("span:last").text();
     }
     loadRating(waypoint, renderDetailsPage);
 }
@@ -118,27 +110,15 @@ function renderDetailsPage() {
     var box = largeBox().hide();
     var rating = ratings[waypoint];
     setRating(box, rating);
+    var myrating = myratings[waypoint];
+    setMyrating(box, myrating);
     if (pageType == "print") {
         $(".TermsWidget").before(box);
     } else {
-        var myrating = myratings[waypoint];
-        setMyrating(box, myrating);
         box.find(".gcczrating-graph").mouseenter(startVote);
         box.find(".gcczrating-graph").mouseleave(endVote);
         box.find(".gcczrating-graph").click(sendVote);
-        if (pageType == "details") {
-            $("#ctl00_ContentBody_GeoNav2_uxHeaderImage").parent().parent().after(box);
-        } else {
-            elem = $("#ctl00_ContentBody_LogBookPanel1_LogButton");
-            if (elem.length > 0) {
-                elem.parent().before(box);
-            } else {
-                elem = $("#ctl00_ContentBody_LogBookPanel1_LogImage");
-                if (elem.length > 0) {
-                    elem.parent().before(box);
-                }
-            }
-        }
+	$("#ctl00_ContentBody_GeoNav2_uxHeaderImage").parent().parent().after(box);
     }
     box.fadeIn();
 }
@@ -147,12 +127,13 @@ function initListPage() {
     log("initList " + pageType);
     wpts = []
     if (pageType == "nearest") {
-        wptsElems = $("a[href^=/seek/cache_details.aspx]").parent();
+        wptsElems = $("a[href^=/seek/cache_details.aspx] img").parent().parent();
         wptsElems.each(function(idx) {
-                var content = $(this).text().split("\n");
-                var wpt = content[3].replace(/(\s|[()])*/g, "");
+                var content = $(this).children('span.small').text().split(" |");
+                var wpt = content[1].replace(/\s*/g, "");
                 wpts.push(wpt);
             });
+        log(wpts);
     } else if (pageType == "bookmarks") {
         wptsElems = $("a[href^=http://www.geocaching.com/seek/cache_details.aspx]");
         wptsElems.each(function(idx) {
@@ -175,9 +156,8 @@ function renderListPage() {
         setRating(box, rating);
         setMyrating(box, myrating);
         if (pageType == "nearest") {
-            var elem = wptsElems.eq(i).prev("td");
-            elem.html($("<div>" + elem.text() + "</div>"));
-            elem.children("div").after(box);
+            var elem = wptsElems.eq(i).next("td").next("td").next("td");
+            elem.append(box);
         } else if (pageType == "bookmarks") {
             wptsElems.eq(2*i).parent().parent().next("tr").children("td").eq(0).html(box);
         }
@@ -426,7 +406,7 @@ function setRating(box, rating) {
 }
 
 function setMyrating(box, myrating) {
-    log("setMyrating");
+    log("setMyrating " + myrating);
     var graph = box.find(".gcczrating-graph .gcczrating-myrating");
     if (myrating == undefined) {
         graph.css("visibility", 'hidden');
@@ -452,6 +432,7 @@ function setMyrating(box, myrating) {
 }
 
 function prepareBox(width, height) {
+    log("prepareBox " + width + " x " + height);
     var overlap = Math.round(height*0.15);
 
     boxHeight = height - 2*overlap;
@@ -466,7 +447,7 @@ function prepareBox(width, height) {
 function largeBox() {
     log("largeBox");
     if (pageType == "details") {
-        width = $("#ctl00_ContentBody_uxTravelBugList_uxInventoryIcon").parent().next().children("p.NoSpacing").width();
+        width = $("#ctl00_ContentBody_uxTravelBugList_uxInventoryIcon").parent().next().width();
     } else {
         width = 500;
     }
@@ -474,11 +455,9 @@ function largeBox() {
     prepareBox(width, height);
 
     if (pageType == "print") {
-        var box = $('<div class="gcczrating-box"><div class="gcczrating-graph" style="height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="height: ' + height + 'px; background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"></div></div><p class="gcczrating-footer" style="margin-top: 0.4em;"><strong>Hodnocení geocaching.cz: </strong><span class="gcczrating-ratingtxt"></span></p></div>');
+        var box = $('<div class="gcczrating-box"><div class="gcczrating-graph" style="height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="height: ' + height + 'px; background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"></div></div><p class="gcczrating-footer" style="margin-top: 0.4em;"><strong>Hodnocení geocaching.cz: </strong><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p></div>');
     } else if (pageType == "details") {
         var box = $('<div class="CacheDetailNavigationWidget Spacing gcczrating-box"><h3 class="WidgetHeader">Hodnocení geocaching.cz</h3><div class="WidgetBody"><div class="gcczrating-graph" style="cursor: pointer; height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"><div class="gcczrating-myrating" style="height: ' + myratingHeight + 'px; width: ' + pointerWidth + 'px; border: 1px solid black; background: rgba(255, 255, 255, 0.5); visibility: hidden;"></div></div></div><p class="NoSpacing gcczrating-footer" style="font-size: 0.9em; margin-top: 0.4em;"><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p></div></div>');
-    } else {
-        var box = $('<div class="gcczrating-box"><p class="gcczrating-footer" style="margin: 0.4em 0;"><strong>Hodnocení geocaching.cz: </strong><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p><div class="gcczrating-graph" style="cursor: pointer; height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"><div class="gcczrating-myrating" style="height: ' + myratingHeight + 'px; width: ' + pointerWidth + 'px; border: 1px solid black; background: rgba(255, 255, 255, 0.5); visibility: hidden;"></div></div></div>');
     }
 
     return box;
@@ -486,7 +465,7 @@ function largeBox() {
 
 function smallBox() {
     log("smallBox");
-    width = 60;
+    width = 65;
     height = 10;
     prepareBox(width, height);
 
