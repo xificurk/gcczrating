@@ -1,9 +1,9 @@
+This package is no longer maintained!
+============================================================================
+
 About
 ============================================================================
-Author:
-    Petr Morávek [Xificurk]
-    jabber id: xificurk [at] jabber.cz
-    email: xificurk [at] gmail.com
+Author: Petr Morávek [Xificurk] <petr@pada.cz>
 
 Requirements
 ============================================================================
