@@ -2,7 +2,7 @@
 // @name            GcCzRating
 // @namespace       http://artax.karlin.mff.cuni.cz/~morap5am/gcczrating
 // @description     Přidává do stránek geocaching.com rozhraní pro hodnocení keší na geocaching.cz
-// @version         0.3.6
+// @version         0.3.8
 // @copyright       2009-2011, Petr Morávek (http://artax.karlin.mff.cuni.cz/~morap5am/gcczrating/)
 // @license         (CC) Attribution; http://creativecommons.org/licenses/by/3.0/
 // @include         http://www.geocaching.com/seek/cache_details.aspx?*
@@ -118,7 +118,7 @@ function renderDetailsPage() {
         box.find(".gcczrating-graph").mouseenter(startVote);
         box.find(".gcczrating-graph").mouseleave(endVote);
         box.find(".gcczrating-graph").click(sendVote);
-	$("#ctl00_ContentBody_GeoNav2_uxHeaderImage").parent().parent().after(box);
+	$("#ctl00_ContentBody_detailWidget").before(box);
     }
     box.fadeIn();
 }
@@ -127,7 +127,7 @@ function initListPage() {
     log("initList " + pageType);
     wpts = []
     if (pageType == "nearest") {
-        wptsElems = $("a[href^=/seek/cache_details.aspx] img").parent().parent();
+        wptsElems = $("a[href^=/seek/cache_details.aspx] span").parent().parent();
         wptsElems.each(function(idx) {
                 var content = $(this).children('span.small').text().split(" |");
                 var wpt = content[1].replace(/\s*/g, "");
@@ -447,7 +447,7 @@ function prepareBox(width, height) {
 function largeBox() {
     log("largeBox");
     if (pageType == "details") {
-        width = $("#ctl00_ContentBody_uxTravelBugList_uxInventoryIcon").parent().next().width();
+        width = $("#ctl00_ContentBody_uxTravelBugList_uxInventoryLabel").parent().next().width();
     } else {
         width = 500;
     }
@@ -457,7 +457,7 @@ function largeBox() {
     if (pageType == "print") {
         var box = $('<div class="gcczrating-box"><div class="gcczrating-graph" style="height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="height: ' + height + 'px; background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"></div></div><p class="gcczrating-footer" style="margin-top: 0.4em;"><strong>Hodnocení geocaching.cz: </strong><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p></div>');
     } else if (pageType == "details") {
-        var box = $('<div class="CacheDetailNavigationWidget Spacing gcczrating-box"><h3 class="WidgetHeader">Hodnocení geocaching.cz</h3><div class="WidgetBody"><div class="gcczrating-graph" style="cursor: pointer; height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"><div class="gcczrating-myrating" style="height: ' + myratingHeight + 'px; width: ' + pointerWidth + 'px; border: 1px solid black; background: rgba(255, 255, 255, 0.5); visibility: hidden;"></div></div></div><p class="NoSpacing gcczrating-footer" style="font-size: 0.9em; margin-top: 0.4em;"><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p></div></div>');
+        var box = $('<div class="CacheDetailNavigationWidget TopSpacing BottomSpacing gcczrating-box"><h3 class="WidgetHeader">Hodnocení geocaching.cz</h3><div class="WidgetBody"><div class="gcczrating-graph" style="cursor: pointer; height: ' + height + 'px; width: ' + width + 'px; background: no-repeat left -moz-linear-gradient(left, black, black); ' + css["background-size"] + ': ' + width + 'px ' + boxHeight + 'px;"><div class="gcczrating-rating" style="background: no-repeat 1px center -moz-linear-gradient(left, #FFF, #FFF); ' + css["background-size"] + ': ' + graphWidth + 'px ' + graphHeight + 'px;"><div class="gcczrating-myrating" style="height: ' + myratingHeight + 'px; width: ' + pointerWidth + 'px; border: 1px solid black; background: rgba(255, 255, 255, 0.5); visibility: hidden;"></div></div></div><p class="NoBottomSpacing gcczrating-footer" style="font-size: 0.9em; margin-top: 0.4em;"><span class="gcczrating-ratingtxt"></span><span class="gcczrating-myratingtxt"></span></p></div></div>');
     }
 
     return box;
